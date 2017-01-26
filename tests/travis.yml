@@ -1,0 +1,8 @@
+---
+- name: Configure hostname for all nodes
+  hosts: all
+  connection: local
+  roles:
+    - ansible-role-hostname
+  vars:
+    hostname_name: ansible-test.augustash.com

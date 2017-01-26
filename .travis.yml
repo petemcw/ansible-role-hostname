@@ -1,0 +1,42 @@
+---
+sudo: required
+language: python
+python: "2.7"
+
+env:
+  PLAYBOOK: travis.yml
+
+addons:
+  apt:
+    packages:
+      - python-pip
+
+install:
+  - pip install ansible
+  - ansible --version
+  # Create ansible.cfg with correct roles_path
+  - printf '[defaults]\nroles_path=../' >ansible.cfg
+
+# Perform tests
+script:
+  # Basic role syntax check
+  - ansible-playbook -i tests/inventory tests/${PLAYBOOK} --syntax-check
+
+  # Run the role/playbook with ansible-playbook.
+  - ansible-playbook -i tests/inventory tests/${PLAYBOOK} --connection=local --sudo
+
+  # Check if idempotent.
+  - idempotence=$(mktemp)
+  - ansible-playbook -i tests/inventory tests/${PLAYBOOK} | tee -a ${idempotence}
+  - >
+    tail ${idempotence}
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+
+  # Test if the hostname is set
+  - grep -q 'ansible-test.augustash.com' /etc/hostname
+
+# Notify Ansible Galaxy when a role builds successfully.
+notifications:
+  email: false
