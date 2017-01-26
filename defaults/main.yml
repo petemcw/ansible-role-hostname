@@ -1,0 +1,6 @@
+---
+# The variables file used for Hostname playbooks.
+# If not overriden in inventory or as a parameter, this is the value that will be used
+
+hostname_enabled: true
+hostname_name: "{{ inventory_hostname }}"

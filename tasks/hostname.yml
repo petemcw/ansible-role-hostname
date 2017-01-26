@@ -1,0 +1,43 @@
+---
+# Defines tasks to configure the Hostname
+
+- name: Gather OS specific varibles
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+  tags:
+    - hostname
+
+- include: Debian/install.yml
+  when: ansible_os_family == 'Debian'
+  tags:
+    - hostname
+
+- name: Set the hostname
+  hostname: >
+    name="{{ hostname_name }}"
+  become: true
+  tags:
+    - hostname
+
+- name: Set IPv4 localhost entry in hosts file
+  lineinfile: >
+    dest=/etc/hosts
+    regexp="^127\.0\.0\.1"
+    line="127.0.0.1 localhost {{ hostname_name }}{% if hostname_name != inventory_hostname_short %} {{ inventory_hostname_short }}{% endif %}"
+    state=present
+  become: true
+  tags:
+    - hostname
+
+- name: Set IPv6 localhost entry in hosts file
+  lineinfile: >
+    dest=/etc/hosts
+    regexp="^::1"
+    line="::1 ip6-localhost ip6-loopback {{ hostname_name }}{% if hostname_name != inventory_hostname_short %} {{ inventory_hostname_short }}{% endif %}"
+    state=present
+  become: true
+  tags:
+    - hostname
